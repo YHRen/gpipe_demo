@@ -116,6 +116,8 @@ if __name__ == "__main__":
         gs, gpn, rk = args.gpus_per_group, args.group_per_node, dist.get_rank()
         start_dev_id = gs*(rk % gpn)
         torch.cuda.set_device(start_dev_id)
+        print(f"start dev id {start_dev_id}")
+        print(f"total device count: {torch.cuda.device_count()}")
 
     BSZ, CSZ, DSZ = args.b, args.c, args.d
     WIDTH, DEPTH, EPOCH = args.w, args.l, args.e
@@ -123,18 +125,21 @@ if __name__ == "__main__":
 
     dataset = get_data(args)
     model = get_model(args)
+    start_dev, end_dev = 0, 0
 
     if args.dist:
         devices = [start_dev_id+i for i in range(args.gpus_per_group)]
         sampler = DistributedSampler(dataset)
         data_loader = DataLoader(
             dataset, batch_size=BSZ, shuffle=False, sampler=sampler)
-        model = model.cuda()
-        model = DDP(model)
         model = GPipe(model, balance=[1, 1, 2], devices=devices, chunks=CSZ)
+        model = DDP(model)
+        start_dev, end_dev = devices[0], devices[-1]
     else:
+        devices = list(range(3))
         dataloader = DataLoader(dataset, batch_size=BSZ)
-        model = GPipe(model, balance=[1, 1, 2], chunks=CSZ)
+        model = GPipe(model, balance=[1, 1, 2], devices=devices, chunks=CSZ)
+        start_dev, end_dev = devices[0], devices[-1]
 
     crit = nn.MSELoss()
     optm = Adam(model.parameters(), lr=0.001)
