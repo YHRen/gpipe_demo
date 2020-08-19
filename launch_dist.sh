@@ -26,3 +26,4 @@ python -m torch.distributed.launch \
     --dist \
     --gpus_per_group 3 \
     --group_per_node ${nproc_per_node}
+
