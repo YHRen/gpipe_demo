@@ -72,13 +72,13 @@ class CNNPipeline(nn.Module):
                                 large_cnn(WIDTH, DEPTH))
         self.m2 = large_cnn(WIDTH, DEPTH)
         self.m3 = nn.Sequential(large_cnn(WIDTH, DEPTH),
-                                nn.Conv2d(WIDTH, 8, 3, 1)),
+                                nn.Conv2d(WIDTH, 8, 3, 1))
         self.m4 = nn.Sequential(nn.AdaptiveMaxPool2d(64), Flatten(),
                                 nn.Linear(64*64*8, 1))
         self.m1 = self.m1.to(devices[0])
-        self.m2 = self.m1.to(devices[1])
-        self.m3 = self.m1.to(devices[2])
-        self.m4 = self.m1.to(devices[2])
+        self.m2 = self.m2.to(devices[1])
+        self.m3 = self.m3.to(devices[2])
+        self.m4 = self.m4.to(devices[2])
 
     def forward(self, x):
         x = self.m1(x)
@@ -158,6 +158,7 @@ if __name__ == "__main__":
 
     dataset = get_data(args)
     start_dev, end_dev = 0, 0
+    data_loader = None
 
     if args.dist:
         devices = [start_dev_id+i for i in range(args.gpus_per_group)]
@@ -173,7 +174,7 @@ if __name__ == "__main__":
         start_dev, end_dev = devices[0], devices[-1]
     else:
         devices = list(range(3))
-        dataloader = DataLoader(dataset, batch_size=BSZ)
+        data_loader = DataLoader(dataset, batch_size=BSZ)
         if args.nogpipe:
             model = CNNPipeline(devices, args.w, args.l)
         else:
