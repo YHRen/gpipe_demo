@@ -169,7 +169,9 @@ if __name__ == "__main__":
             model = CNNPipeline(devices, args.w, args.l)
         else:
             model = get_model(args)
-            model = GPipe(model, balance=[1, 1, 2], devices=devices, chunks=CSZ)
+            model = GPipe(model, balance=[1, 1, 2],
+                          devices=devices, chunks=CSZ,
+                          checkpoint='never')
             model = DDP(model)
         start_dev, end_dev = devices[0], devices[-1]
     else:
@@ -187,8 +189,8 @@ if __name__ == "__main__":
     t1 = perf_counter()
     for _ in range(EPOCH):
         for x, y in data_loader:
-            x = x.to(model.devices[0])
-            y = y.to(model.devices[-1])
+            x = x.to(start_dev)
+            y = y.to(end_dev)
             optm.zero_grad()
             output = model(x)
             loss = crit(output, y)

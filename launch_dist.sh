@@ -7,7 +7,9 @@ master_addr=${3:-localhost}  # you should use either an ip address,
                              #   or a node name on hpc environment.
 port=18888                   # for example, 8888
 
-module load ibm-wml-ce nsight-systems
+# on IBM's power9 (ac922)
+# module load ibm-wml-ce nsight-systems
+
 mod="cnn"
 b=32
 c=4
@@ -16,6 +18,8 @@ fcw=128
 fcl=5
 epc=2
 
+# on dgx2
+#CUDA_VISIBLE_DEVICES=10,11,12,13,14,15 \
 python -m torch.distributed.launch \
     --nproc_per_node ${nproc_per_node} \
     --nnodes "$nnodes" \
